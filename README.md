@@ -15,25 +15,20 @@ Complete credit for the base work goes to [@FraPochetti](http://francescopochett
 
 
 ## Example Output
-Right now, we are focused on just finding text. I found a random online image of a dicom file with a bunch of text, and went through different steps. First, here are all the Objects, detected on the image:
+Right now, we are focused on just finding text. I found a random online image of a dicom file with a bunch of text, and went through different steps. First, here are all the Objects, detected on the image (note this is a a random image with text I found on Google):
 
 ![lao-detect.png](img/lao-detect.png)
 
 
 ### Objects
-And here they are extracted from the image:
+And here they are extracted from the image. Note that some of these aren't letters but just blocks with lines:
 
 ![lao-detect-check.png](img/lao-detect-check.png)
 
 
-### Candidate Objects
-
-![lao-detect-candidates.png](img/lao-detect-candidates.png)
-
-
 ### Single Character Recognition
 
-We don't really care about this one.
+We don't really care about this one, it's an attempt to say what letter is what.
 
 ![lao-detect-letters.png](img/lao-detect-letters.png)
 
@@ -44,3 +39,4 @@ This is the part that (I think) we care about, this is a crappy plot of showing 
 ![lao-text.png](img/lao-text.png)
 
 
+For all of the above, this would need some careful work to tweak and test with dicom, and add a step to black out text, and then do test runs with different kinds of burnt text and see what happens.
