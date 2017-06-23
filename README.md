@@ -15,9 +15,13 @@ Complete credit for the base work goes to [@FraPochetti](http://francescopochett
 
 
 ## Example Output
-Right now, we are focused on just finding text. I found a random online image of a dicom file with a bunch of text, and went through different steps:
+Right now, we are focused on just finding text. I found a random online image of a dicom file with a bunch of text, and went through different steps. First, here are all the Objects, detected on the image:
+
+![lao-detect.png](img/lao-detect.png)
+
 
 ### Objects
+And here they are extracted from the image:
 
 ![lao-detect-check.png](img/lao-detect-check.png)
 
