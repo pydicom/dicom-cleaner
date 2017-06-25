@@ -1,24 +1,25 @@
+import cPickle
+from datetime import datetime
+from matplotlib import pyplot as plt
+from skimage.io import imread
+from skimage.transform import resize
+import numpy as np
 import os
 import re
 import sys
-import cPickle
-import numpy as np
-from skimage.io import imread
-from datetime import datetime
-from skimage.transform import resize
-from matplotlib import pyplot as plt
+
+
 
 class Cifar():
-    """
+    '''
     this class deals with images not containing text.
     An instance of this class is created into the merge_with_cifar method of OCR class
     in order merge cifar data with text data.
-    """
+    '''
     
     def __init__(self, config):
-        """
-        initialize the instance picking parameters from a config.py file.
-        """
+        '''initialize the instance picking parameters from a config.py file.
+        '''
         self.config = self._load_config(config)
         self.img_size = self.config['img_size']
         self.folder = self.config['folder']
@@ -30,17 +31,15 @@ class Cifar():
 ########################################################################################################################
         
     def _load_config(self, filename):
-        """
-        Reads a config.py file and returns the dictionary with all parameters
-        """
+        '''Reads a config.py file and returns the dictionary with all parameters
+        '''
         return eval(open(filename).read())        
 
 #########################################################################################################################
 
     def load(self):
-        """
-        loads cifar data into python dictionary.
-        """
+        '''loads cifar data into python dictionary.
+        '''
 
         if self.from_pickle:
             try:
@@ -85,9 +84,8 @@ class Cifar():
 ########################################################################################################################
 
     def plot_some(self):
-        """
-        plots 100 images with relative label randomly picked from loaded data.
-        """
+        '''plots 100 images with relative label randomly picked from loaded data.
+        '''
         n_images = self.cif['images'].shape[0]
     
         fig = plt.figure(figsize=(12, 12))

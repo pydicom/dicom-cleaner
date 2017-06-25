@@ -1,30 +1,42 @@
-import os
+from cifar import Cifar
 import cPickle
+
+from datetime import datetime
+
+from glob import glob
+from matplotlib import pyplot as plt
 import numpy as np
+import os
+
+from pprint import pprint
+from random import (
+    seed, 
+    sample
+)
+
+import sys
+import string
+
+from skimage import color
+from skimage.feature import hog
 from skimage.io import imread
 from skimage.transform import resize
-from glob import glob
-import string
-from matplotlib import pyplot as plt
-import sys
-from random import seed, sample
-from pprint import pprint
-from datetime import datetime
+
 from sklearn.base import BaseEstimator
-from skimage.feature import hog
-from skimage import color
-from sklearn import cross_validation
 from sklearn.grid_search import GridSearchCV
+from sklearn import cross_validation
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import (
+    confusion_matrix,
+    accuracy_score
+)
+
 from nolearn.decaf import ConvNetFeatures
-from sklearn.metrics import accuracy_score
-from cifar import Cifar
+
 
 class OcrData():
-    """
-    class in charge of creating and dealing with image objects.
+    '''class in charge of creating and dealing with image objects.
     The goal of this class is to return clean data which is ready for a Machine Learning Pipeline.
     total images = 78905
     WINDOWS:
@@ -33,13 +45,13 @@ class OcrData():
     LINUX:
     -- folder_labels='/media/francesco/Francesco/CharacterProject/ImageTree'
     -- folder_data='/media/francesco/Francesco/CharacterProject'
-    """
+    '''
     
     def __init__(self, config):
-        """
+        '''
         builds the constructor by reading the config.py file and initializing parameters.
         It also automatically loads the images and in case splits the data into train and test set. 
-        """
+        '''
         self.config = self._load_config(config)
         self.folder_labels = self.config['folder_labels']
         self.folder_data = self.config['folder_data']
@@ -60,22 +72,21 @@ class OcrData():
 #######################################################################################################################
 
     def _load_config(self, filename):
-        """
+        '''
         Reads a config.py file and returns the python dictionary with all parameters
-        """
+        '''
         return eval(open(filename).read())        
         
 ########################################################################################################################        
         
     def getRelativePath(self):
-        """
-        Fetches the relative path of all the images and returns them into a list.
+        '''Fetches the relative path of all the images and returns them into a list.
         The paths will be used to load the images by the load method.
         Images fetched from the 3 available datasets:
         - Img
         - Fnt
         - Hnd
-        """
+        '''
         mfiles = [os.path.join(self.folder_labels,mfile) for mfile in glob(os.path.join(self.folder_labels,'*.m'))]
 
         self.images = []
@@ -111,8 +122,7 @@ class OcrData():
 ###################################################################################################################################################    
     
     def getLabels(self):
-        """
-        Fetches the labels of all the images and returns them into a list.
+        '''Fetches the labels of all the images and returns them into a list.
         Once loaded the images will be labeled accordingly.
         Images fetched from the 3 available datasets:
         - Img
@@ -125,7 +135,7 @@ class OcrData():
         For the sake of simplicity lowercase is considered the same as uppercase and now we have 36 classes:
         - [0-9] --> 10
         - [(a == A)-(z == Z)]
-        """
+        '''
         mfiles = [os.path.join(self.folder_labels,mfile) for mfile in glob(os.path.join(self.folder_labels,'*.m'))]
 
         self.labels = []        
@@ -151,15 +161,14 @@ class OcrData():
         self.labels = map(lambda x: classes[int(x)], self.labels)
         
         if self.verbose:
-            print 'Found {} labels.'.format(len(self.labels))        
+            print('Found {} labels.'.format(len(self.labels)))      
            
         return self.labels 
  
 ##################################################################################################################################################       
         
     def load(self):
-        """
-        if from_pickle == False the load method gets the relative paths of the images and their labels,
+        '''if from_pickle == False the load method gets the relative paths of the images and their labels,
         zips them together, loads the images in greyscale, resizes them to img_size, flattens them, shuffles randomly 
         the loaded data and returns the following dictionary:
          - images --> shuffled (M x N) images
@@ -167,7 +176,7 @@ class OcrData():
          - target --> labels of each image 
         if from_pickle == True and pickle_data == 'path/to/pickle/dictionary' the load method simply 
         returns the same dictionary as before previously loaded and saved.
-        """
+        '''
         
         if self.from_pickle:
             try:
@@ -182,11 +191,11 @@ class OcrData():
                                    'target': self.ocr['target'][:self.limit]
                                    }
                     if self.verbose:
-                        print 'Loaded {} images each {} pixels'.format(self.ocr['images'].shape[0], self.img_size)
+                        print('Loaded {} images each {} pixels'.format(self.ocr['images'].shape[0], self.img_size))
                     return self.ocr
                 
             except IOError:
-                print 'You have not provided a .pickle file to load data from!'
+                print('You have not provided a .pickle file to load data from!')
                 sys.exit(0)
         else:
             image_paths = self.getRelativePath()
@@ -216,7 +225,7 @@ class OcrData():
             labels_shuf = np.array(labels)[k]
                 
             if self.verbose:
-                print 'Loaded {} images each {} pixels'.format(len(labels), self.img_size)
+                print('Loaded {} images each {} pixels'.format(len(labels), self.img_size))
             
             self.ocr = {            
                  'images': im_shuf,
@@ -235,11 +244,10 @@ class OcrData():
 ###########################################################################################################################################
 
     def split_train_test(self):
-        """
-        given the dictionary returned by the load method it returns two datasets: 
+        '''given the dictionary returned by the load method it returns two datasets: 
         - train set --> (1-self.split)% of originally loaded data
         - test set --> self.split% of originally loaded data
-        """ 
+        ''' 
 
         seed(10)
         total = len(self.ocr['target'])
@@ -268,9 +276,8 @@ class OcrData():
 ###########################################################################################################################################
 
     def plot_some(self):
-        """
-        plots 100 images with relative label randomly picked from loaded data.
-        """
+        '''plots 100 images with relative label randomly picked from loaded data.
+        '''
         n_images = self.ocr['images'].shape[0]
     
         fig = plt.figure(figsize=(12, 12))
@@ -286,10 +293,9 @@ class OcrData():
 #########################################################################################################################################
 
     def set_models(self):
-        """
-        sets the ML Algorithms + Parameters which will be used during CV.
+        '''sets the ML Algorithms + Parameters which will be used during CV.
         Returns a dictionary which is ready to be taken as input by GridSearchCV.
-        """
+        '''
 
         models = {
             'linearsvc': (
@@ -321,22 +327,21 @@ class OcrData():
 ####################################################################################################################################
 
     def perform_grid_search_cv(self, model_name):
-        """
-        given a labeled train set (X_train, y_train) and a model_name among the
+        '''given a labeled train set (X_train, y_train) and a model_name among the
         ones set by the set_models method, returns the best model out of all
         parameters combinations using the specified algorithm
-        """
+        '''
         if not self.automatic_split:
-            print 'Before performing any ML you should split your data!'
-            print 'Change to True the automatic_split in the config file.'
+            print('Before performing any ML you should split your data!')
+            print('Change to True the automatic_split in the config file.')
             sys.exit(0)
             
         model, param_grid = self.cross_val_models[model_name]
         
-        print 'Model: ', model_name
-        print 'Parameters: ', param_grid
-        print 'Train set shape: ', self.data_train.shape
-        print 'Target shape: ', self.labels_train.shape
+        print('Model: ', model_name)
+        print('Parameters: ', param_grid)
+        print('Train set shape: ', self.data_train.shape)
+        print('Target shape: ', self.labels_train.shape)
         
         gs = GridSearchCV(model, param_grid, n_jobs=-1, cv=3, verbose=4)
         gs.fit(self.data_train, self.labels_train)
@@ -350,23 +355,22 @@ class OcrData():
         with open(full_name, 'wb') as fout:
             cPickle.dump(gs, fout, -1)
      
-        print "Saved model to {}".format(full_name)
+        print("Saved model to {}".format(full_name))
 
 ###############################################################################################################################
 
     def perform_convnet(self):
-        """
-        trains a model on data using pre-trained NN to extract features and then using SVM with linear kernel.
-        """
+        '''trains a model on data using pre-trained NN to extract features and then using SVM with linear kernel.
+        '''
         n_images = self.images_train.shape[0]
-        print 'Preparing to turn {} to RGB.'.format(n_images)
+        print('Preparing to turn {} to RGB.'.format(n_images))
         size = (self.img_size[0], self.img_size[1], 3)
         colored = np.zeros((n_images,) + size)
         for i in range(n_images):
             colored[i] =  color.gray2rgb(self.images_train[i])
-        print 'Turned {} images to {} shape.'.format(colored.shape[0], size)
+        print('Turned {} images to {} shape.'.format(colored.shape[0], size))
         for c in [0.01, 0.1, 1, 2, 10]:
-            print 'Fitting Pipeline (NN + SVC) C=', c
+            print('Fitting Pipeline (NN + SVC) C=', c)
             clf = Pipeline([
                             ('convnet', ConvNetFeatures(
                                         pretrained_params='/home/francesco/BigData/Kaggle/CatsDogs/imagenet.decafnet.epoch90',
@@ -379,10 +383,9 @@ class OcrData():
 ###############################################################################################################################
 
     def generate_best_hog_model(self):
-        """
-        given the best parameters out of grid search returns best model on all train set using
+        '''given the best parameters out of grid search returns best model on all train set using
         Pipeline(hog + linearsvc).  
-        """
+        '''
         
         clf = Pipeline([('hog', HOGFeatures(orientations=10, pixels_per_cell=(5,5), cells_per_block=(2,2), size = self.img_size)), 
                         ('clf', LinearSVC(C=2.0))])        
@@ -390,7 +393,7 @@ class OcrData():
         clf.fit(self.data_train, self.labels_train)
         y_pred = clf.predict(self.data_train)
         
-        print 'Accuracy on train set: ', accuracy_score(self.labels_train, y_pred)
+        print('Accuracy on train set: ', accuracy_score(self.labels_train, y_pred))
 
         now = str(datetime.now()).replace(':','-')   
         fname_out = 'linearsvc-hog-fulltrain-{}.pickle'.format(now)
@@ -399,32 +402,31 @@ class OcrData():
         with open(full_name, 'wb') as fout:
             cPickle.dump(clf, fout, -1)
      
-        print "Saved model to {}".format(full_name)        
+        print("Saved model to {}".format(full_name))
         
 ################################################################################################################################
 
     def evaluate(self, model_filename):
-        """
-        Evaluates best model out of CV on test set
-        """
+        '''Evaluates best model out of CV on test set
+        '''
         if not self.automatic_split:
-            print 'Before performing any ML you should split your data!'
-            print 'Change to True the automatic_split in the config file.'
+            print('Before performing any ML you should split your data!')
+            print('Change to True the automatic_split in the config file.')
             sys.exit(0)
             
         if self.split==0:
-            print 'The percentage_of_test_set in the config.py is set to 0.'
-            print 'Thus you do not have a test set to evaluate your model on.'
+            print('The percentage_of_test_set in the config.py is set to 0.')
+            print('Thus you do not have a test set to evaluate your model on.')
             sys.exit(0)
                                
         with open(model_filename, 'rb') as fin:
             model = cPickle.load(fin)
      
         y_pred = model.predict(self.data_test)
-        print 'Test set shape: ', self.data_test.shape
-        print 'Target shape: ', self.labels_test.shape
-        print 'Accuracy on train set: ', accuracy_score(self.labels_train, model.predict(self.data_train))
-        print 'Accuracy on test set: ', accuracy_score(self.labels_test, y_pred)
+        print('Test set shape: ', self.data_test.shape)
+        print('Target shape: ', self.labels_test.shape)
+        print('Accuracy on train set: ', accuracy_score(self.labels_train, model.predict(self.data_train)))
+        print('Accuracy on test set: ', accuracy_score(self.labels_test, y_pred))
 
         if self.plot_evaluation:      
             target_names = sorted(np.unique(self.labels_test))
@@ -455,11 +457,10 @@ class OcrData():
 ########################################################################################################################
 
     def merge_with_cifar(self):
-        """
-        merges ocr data with cifar data and relabels in order to perform binary classification.
+        '''merges ocr data with cifar data and relabels in order to perform binary classification.
         This method is in charge of generating a unique data set merging 50000 images containing text (from the OCR data set)
         and 50000 images not containing text (from the CIFAR-10 data set).
-        """ 
+        ''' 
         cifar = Cifar('/home/francesco/Dropbox/DSR/OCR/cifar-config.py')
         
         text = OcrData('/home/francesco/Dropbox/DSR/OCR/text-config.py')
@@ -491,11 +492,10 @@ class OcrData():
 #################################################################################################################################
 
 class HOGFeatures(BaseEstimator):
-    """
-    Defining class with fit/transform interface necessary for the Scikit-learn Pipeline.
+    '''Defining class with fit/transform interface necessary for the Scikit-learn Pipeline.
     This class implements the Histogram Of Gradients, which is a technique commonly used to 
     extract relevant features from images (object detection for example) and then pass them to a classifier. 
-    """
+    '''
     def __init__(self, 
                  size,
                  orientations=8, 
@@ -512,7 +512,10 @@ class HOGFeatures(BaseEstimator):
         return self
 
     def transform(self, X):
-        X = X.reshape((X.shape[0], self.size[0], self.size[1]))
+        try:
+            X = X.reshape((X.shape[0], self.size[0], self.size[1]))
+        except:
+            X = X.reshape(1,self.size[0], self.size[1])
         result = []
         for image in X:
             #image = rgb2gray(image)
@@ -524,25 +527,3 @@ class HOGFeatures(BaseEstimator):
                 )
             result.append(features)
         return np.array(result)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    

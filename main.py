@@ -1,7 +1,84 @@
-from userimageski import UserData
+#!/usr/bin/env python3
 
-if __name__ == '__main__':
-   
+'''
+
+The MIT License (MIT)
+
+Copyright (c) 2017 Vanessa Sochat
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+'''
+
+from user import UserData
+from glob import glob
+import tempfile
+import argparse
+import skimage
+import sys
+import os
+import warnings
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+
+
+
+def get_parser():
+    parser = argparse.ArgumentParser(
+    description="Deid (de-identification) pixel scaping tool.")
+
+    # Single image, must be string
+    parser.add_argument("--input","-i", dest='folder', 
+                        help="input folder to search for images.", 
+                        type=str, default=None)
+
+    parser.add_argument("--outfolder","-o", dest='outfolder', 
+                        help="full path to save output, will use /data folder if not specified", 
+                        type=str, default=None)
+
+    parser.add_argument("--verbose","-v", dest='verbose', 
+                        help="if set, print more image debugging to screen.", 
+                        default=False, action='store_true')
+
+    return parser
+
+
+
+def main():
+
+    parser = get_parser()
+
+    try:
+        args = parser.parse_args()
+    except:
+        sys.exit(0)
+
+    from deid.dicom import get_files
+    from logger import bot
+
+    if args.folder is None:
+        bot.error("Please provide a folder with dicom files with --input.")
+        sys.exit(1)
+
+    dicom_files = get_files(args.folder)
+
     ##### the following code includes all the steps to get from a raw image to a prediction.
     ##### the working code is the uncommented one. 
     ##### the two pickle models which are passed as argument to the select_text_among_candidates
@@ -9,24 +86,60 @@ if __name__ == '__main__':
     ##### just for the purpose of clearness below the code is provided. 
     ##### I want to emphasize that the commented code is the one necessary to get the models trained.
     
-    # creates instance of class and loads image    
-    user = UserData('lao.png')
-    # plots preprocessed imae 
-    user.save_preprocessed_image('/data/lao-detect.png')
-    # detects objects in preprocessed image
-    candidates = user.get_text_candidates()
-    # plots objects detected
-    user.plot_to_check_save(candidates, 'Total Objects Detected', '/data/lao-detect-check.png')
-    # selects objects containing text
-    maybe_text = user.select_text_among_candidates('/code/linearsvc-hog-fulltrain2-90.pickle')
-    # plots objects after text detection
-    user.plot_to_check_save(maybe_text, 'Objects Containing Text Detected', '/data/lao-detect-candidates.png')
-    # classifies single characters
-    classified = user.classify_text('/code/linearsvc-hog-fulltrain36-90.pickle')
-    # plots letters after classification 
-    user.plot_to_check_save(classified, 'Single Character Recognition','/data/lao-detect-letters.png')
-    # plots the realigned text
-    user.realign_text_save('/data/lao-text.png')
+    # For each file, determine if PHI, for now just alert user
+    for dicom_file in dicom_files:
+
+        dicom_name = os.path.basename(dicom_file)
+        dicom = UserData(dicom_file,
+                         verbose=args.verbose)
+
+        # plots preprocessed image
+        dicom.save_preprocessed_image('/data/%s_preprocessed.png' %dicom_name)
+
+        # detects objects in preprocessed image
+        candidates = dicom.get_text_candidates()
+        clean = True
+
+        if candidates is not None:
+
+            if args.verbose:
+                bot.debug("%s has %s text candidates" %(dicom_name,len(candidates['coordinates'])))
+            # plots objects detected
+            #dicom.plot_to_check_save(candidates, 'Total Objects Detected', '/data/lao-detect-check.png')
+
+            # selects objects containing text
+            maybe_text = dicom.select_text_among_candidates('/code/data/linearsvc-hog-fulltrain2-90.pickle')
+
+            # plots objects after text detection
+            #dicom.plot_to_check_save(maybe_text, 'Objects Containing Text Detected', '/data/lao-detect-candidates.png')
+    
+            # classifies single characters
+            classified = dicom.classify_text('/code/data/linearsvc-hog-fulltrain36-90.pickle')
+            if args.verbose:
+                bot.debug("%s has %s classified text" %(dicom_name,len(classified['coordinates'])))
+
+            if len(classified) > 0:
+                if args.verbose:
+                    bot.warning("%s is flagged for text content." %(dicom_name))
+                clean = False
+            else:
+                bot.info("%s is clean" %(dicom_name))
+
+        else:
+            bot.info("%s is clean" %(dicom_name))
+
+        
+        # plots letters after classification 
+        #dicom.plot_to_check_save(classified, 'Single Character Recognition','/data/lao-detect-letters.png')
+        
+        if not clean:
+            dicom.scrape_save('/data/%s_cleaned.png' %dicom_name)
+        print('============================================================')
+ 
+
+if __name__ == '__main__':
+    main()
+
     
 ##########################################################################################################################    
 ## MACHINE LEARNING SECTION
@@ -51,7 +164,7 @@ if __name__ == '__main__':
     #data.generate_best_hog_model()
     #
     # TAKES THE JUST GENERATED MODEL AND EVALUATES IT ON TRAIN SET
-    #data.evaluate('/media/francesco/Francesco/CharacterProject/linearsvc-hog-fulltrain2-90.pickle')
+    #data.evaluate('/code/data/linearsvc-hog-fulltrain2-90.pickle')
 
 
     ####################################################################
@@ -59,7 +172,7 @@ if __name__ == '__main__':
     ####################################################################
     #
     # CREATES AN INSTANCE OF THE CLASS LOADING THE OCR DATA 
-    #data = OcrData('/home/francesco/Dropbox/DSR/OCR/ocr-config.py')
+    #data = OcrData('/code/ocr/ocr-config.py')
     #
     # PERFORMS GRID SEARCH CROSS VALIDATION GETTING BEST MODEL OUT OF PASSED PARAMETERS
     #data.perform_grid_search_cv('linearsvc-hog')
@@ -68,4 +181,4 @@ if __name__ == '__main__':
     #data.generate_best_hog_model()
     #
     # TAKES THE JUST GENERATED MODEL AND EVALUATES IT ON TRAIN SET
-    #data.evaluate('/media/francesco/Francesco/CharacterProject/linearsvc-hog-fulltrain36-90.pickle')
+    #data.evaluate('/code/data/linearsvc-hog-fulltrain36-90.pickle')

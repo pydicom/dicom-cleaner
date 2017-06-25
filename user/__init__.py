@@ -5,34 +5,40 @@ from skimage.transform import resize
 import cPickle
 import matplotlib
 from matplotlib import pyplot as plt
+from pylab import fill
 from skimage.morphology import closing, square
 from skimage.measure import regionprops
 from skimage import restoration
 from skimage import measure
-from skimage.color import label2rgb
+from skimage.color import (
+    label2rgb,
+    rgb2gray
+)
 import matplotlib.patches as mpatches
+from pydicom import read_file
+
 
 class UserData():
-    """
-    class in charge of dealing with User Image input.
+    '''class in charge of dealing with User Image input.
     the methods provided are finalized to process the image and return 
     the text contained in it.
-    """
+    '''
     
-    def __init__(self, image_file):
-        """
-        reads the image provided by the user as grey scale and preprocesses it.
-        """
-        self.image = imread(image_file, as_grey=True)
+    def __init__(self,dicom_file,verbose=False):
+        '''reads the dicom image provided by the user as and preprocesses it.
+        '''
+        dicom = read_file(dicom_file,force=True)
+        self.image = dicom._get_pixel_array()
+        self.verbose = verbose
+        #self.image = imread(image_file, as_grey=True)
         self.preprocess_image()
     
 #############################################################################################################
 
     def preprocess_image(self):
-        """
-        Denoises and increases contrast. 
-        """
-        image = restoration.denoise_tv_chambolle(self.image, weight=0.1)
+        '''Denoises and increases contrast. 
+        '''
+        image = restoration.denoise_tv_chambolle(self.image, weight=0.01)
         thresh = threshold_otsu(image)
         self.bw = closing(image > thresh, square(2))
         self.cleared = self.bw.copy()
@@ -41,23 +47,28 @@ class UserData():
 ############################################################################################################
 
     def get_text_candidates(self):
-        """
-        identifies objects in the image. Gets contours, draws rectangles around them
+        '''identifies objects in the image. Gets contours, draws rectangles around them
         and saves the rectangles as individual images.
-        """
+        '''
         label_image = measure.label(self.cleared)   
         borders = np.logical_xor(self.bw, self.cleared)
         label_image[borders] = -1
         
-        
+        samples = None
         coordinates = []
         i=0
         
         for region in regionprops(label_image):
-            if region.area > 10:
+
+            # NOTE: this is rather rough, to estimate that text is greater
+            # than some size but less than others, can be improved upon
+            if region.area > 2 and region.area < 200:
                 minr, minc, maxr, maxc = region.bbox
+
+                # Add some padding
                 margin = 3
                 minr, minc, maxr, maxc = minr-margin, minc-margin, maxr+margin, maxc+margin
+
                 roi = self.image[minr:maxr, minc:maxc]
                 if roi.shape[0]*roi.shape[1] == 0:
                     continue
@@ -76,27 +87,37 @@ class UserData():
                         samples = np.concatenate((samples[:,:,:], roismall[None,:,:]), axis=0)
                         coordinates.append(region.bbox)
         
+        if samples is None:
+            return None
+
+        if len(samples) > 3:            
+            flattened = samples.reshape((samples.shape[0], -1))
+        elif len(samples) == 1:
+            return None
+        else:
+            flattened = samples.reshape(1,400)
+
         self.candidates = {
                     'fullscale': samples,          
-                    'flattened': samples.reshape((samples.shape[0], -1)),
+                    'flattened': flattened,
                     'coordinates': np.array(coordinates)
                     }
-        
-        print 'Images After Contour Detection'
-        print 'Fullscale: ', self.candidates['fullscale'].shape
-        print 'Flattened: ', self.candidates['flattened'].shape
-        print 'Contour Coordinates: ', self.candidates['coordinates'].shape
-        print '============================================================'
+
+        if self.verbose:        
+            print('Images After Contour Detection')
+            print('Fullscale: ', self.candidates['fullscale'].shape)
+            print('Flattened: ', self.candidates['flattened'].shape)
+            print('Contour Coordinates: ', self.candidates['coordinates'].shape)
+            print('============================================================')
         
         return self.candidates 
     
 ##########################################################################################################################
 
     def select_text_among_candidates(self, model_filename2):
-        """
-        it takes as argument a pickle model and predicts whether the detected objects
+        '''it takes as argument a pickle model and predicts whether the detected objects
         contain text or not. 
-        """
+        '''
         with open(model_filename2, 'rb') as fin:
             model = cPickle.load(fin)
             
@@ -108,12 +129,13 @@ class UserData():
                                  'coordinates': self.candidates['coordinates'][is_text == '1']
                                  }
 
-        print 'Images After Text Detection'
-        print 'Fullscale: ', self.to_be_classified['fullscale'].shape
-        print 'Flattened: ', self.to_be_classified['flattened'].shape
-        print 'Contour Coordinates: ', self.to_be_classified['coordinates'].shape
-        print 'Rectangles Identified as NOT containing Text '+str(self.candidates['coordinates'].shape[0]-self.to_be_classified['coordinates'].shape[0])+' out of '+str(self.candidates['coordinates'].shape[0])
-        print '============================================================'
+        if self.verbose:
+            print('Images After Text Detection')
+            print('Fullscale: ', self.to_be_classified['fullscale'].shape)
+            print('Flattened: ', self.to_be_classified['flattened'].shape)
+            print('Contour Coordinates: ', self.to_be_classified['coordinates'].shape)
+            print('Rectangles Identified as NOT containing Text '+str(self.candidates['coordinates'].shape[0]-self.to_be_classified['coordinates'].shape[0])+' out of '+str(self.candidates['coordinates'].shape[0]))
+            print('============================================================')
         
                
         return self.to_be_classified
@@ -121,9 +143,8 @@ class UserData():
 ####################################################################################################
 
     def classify_text(self, model_filename36):
-        """
-        it takes as argument a pickle model and predicts character
-        """
+        '''it takes as argument a pickle model and predicts character
+        '''
         with open(model_filename36, 'rb') as fin:
             model = cPickle.load(fin)
             
@@ -141,10 +162,9 @@ class UserData():
 ############################################################################################################################
 
     def realign_text(self,show=True):
-        """
-        processes the classified characters and reorders them in a 2D space 
+        '''processes the classified characters and reorders them in a 2D space 
         generating a matplotlib image. 
-        """
+        '''
         max_maxrow = max(self.which_text['coordinates'][:,2])
         min_mincol = min(self.which_text['coordinates'][:,1])
         subtract_max = np.array([max_maxrow, min_mincol, max_maxrow, min_mincol]) 
@@ -165,19 +185,7 @@ class UserData():
             ax.text(char[0][1], char[0][2], char[1][0], size=16)
         ax.set_ylim(-10,ymax+10)
         ax.set_xlim(-10,xmax+10)  
-       
-       
-        #### CODE ADDED MANUALLY TO UNDERLINE CORRECT TEXT OUTPUT. JUST FOR THE PURPOSE OF
-        #### CLEARNESS AND ONLY APPLICABLE TO THE EXAMPLE IMAGE lao.jpg     
-        ############################################################################################
-        ############################################################################################
-        ax.broken_barh([(80, 80), (175, 150), (370, 40)] , (185, 35), facecolors='blue', alpha = 0.5)
-        ax.broken_barh([(-5, 205), (225, 120), (355, 160)] , (120, 35), facecolors='blue', alpha = 0.5)
-        ax.broken_barh([(35, 95), (150, 20), (190, 135), (370, 65)] , (50, 40), facecolors='blue', alpha = 0.5)
-        ax.broken_barh([(440, 95)] , (-2, 22), facecolors='blue', alpha = 0.5)
-        ############################################################################################
-        ############################################################################################
-        
+               
         if show:
             plt.show()
         return plt
@@ -191,11 +199,47 @@ class UserData():
 
 ############################################################################################################################
 
+    def scrape(self,show=True):
+        '''fill coordinates with black 
+        '''
+                  
+        coordinates = self.which_text["coordinates"]
+        coordinates = [list(coordinate) for coordinate in coordinates]
+        image = self.image.copy()        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        for coordinate in coordinates:
+            minr, minc, maxr, maxc = coordinate
+            print("Scrubbing (%s,%s,%s,%s)" %(minr, minc, maxr, maxc))
+            rect = mpatches.Rectangle((minc, minr), maxc - minc, maxr - minr,
+                                      fill=True, facecolor='black', edgecolor='black', linewidth=2)
+            ax.add_patch(rect)
+            
+            # Add some padding
+            margin = 3
+            minr, minc, maxr, maxc = minr-margin, minc-margin, maxr+margin, maxc+margin
+            ax.imshow(image)
+            #fill([minr,minc,maxr,maxc], 'r', alpha=0.2, edgecolor='r')
+            
+                           
+        if show:
+            plt.show()
+        return plt
+
+
+    def scrape_save(self,output_file):
+        '''realign text and save to output file'''
+        plt = self.scrape(show=False)
+        plt.savefig(output_file)
+
+
+
+############################################################################################################################
+
     def plot_to_check(self, what_to_plot, title, show=True):
-        """
-        plots images at several steps of the whole pipeline, just to check output.
+        '''plots images at several steps of the whole pipeline, just to check output.
         what_to_plot is the name of the dictionary to be plotted
-        """
+        '''
         n_images = what_to_plot['fullscale'].shape[0]
         
         fig = plt.figure(figsize=(12, 12))
@@ -235,15 +279,19 @@ class UserData():
         plt.savefig(output_file)
 
 
-    
+
+    def doprint(self,image,output_file):
+        fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(12, 12))
+        ax.imshow(image)
+        plt.savefig(output_file)    
+        plt.close()
     
 ############################################################################################################################
   
     def plot_preprocessed_image(self,show=True):
-        """
-        plots pre-processed image. The plotted image is the same as obtained at the end
+        '''plots pre-processed image. The plotted image is the same as obtained at the end
         of the get_text_candidates method.
-        """
+        '''
         image = restoration.denoise_tv_chambolle(self.image, weight=0.1)
         thresh = threshold_otsu(image)
         bw = closing(image > thresh, square(2))
@@ -259,7 +307,7 @@ class UserData():
         ax.imshow(image_label_overlay)
         
         for region in regionprops(label_image):
-            if region.area < 10:
+            if region.area < 5:
                 continue
         
             minr, minc, maxr, maxc = region.bbox
@@ -270,6 +318,7 @@ class UserData():
         if show:
             plt.show()       
         return plt
+
 
     def save_preprocessed_image(self,output_file):
         '''save a preprocessed image'''
