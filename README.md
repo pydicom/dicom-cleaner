@@ -49,11 +49,6 @@ DEBUG Checking 5 dicom files for validation.
   warn("The default mode, 'constant', will be changed to 'reflect' in "
 /opt/anaconda2/lib/python2.7/site-packages/skimage/feature/_hog.py:119: skimage_deprecation: Default value of `block_norm`==`L1` is deprecated and will be changed to `L2-Hys` in v0.15
   'be changed to `L2-Hys` in v0.15', skimage_deprecation)
-WARNING 1.2.840.113619.2.59.2156250086.549.978711541.365 is flagged for text content.
-WARNING 1.2.840.113619.2.59.2156250086.517.978711330.290 is flagged for text content.
-WARNING 1.2.840.113619.2.59.2156250086.517.978711330.288 is flagged for text content.
-WARNING 1.2.840.113619.2.59.2156250086.549.978711541.366 is flagged for text content.
-WARNING 1.2.840.113619.2.59.2156250086.541.978710307.766 is flagged for text content.
 Found 5 valid dicom files
 Scrubbing (108,0,408,512)
 Scrubbing (418,200,431,230)
