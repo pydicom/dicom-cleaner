@@ -3,7 +3,7 @@
 This is currently under development, and builds a Singularity image to run text (letter detection) on a demo image. If this is a route we want to go, this can be tweaked to accept a dicom file, and have some logic for finding and removing classified regions.
 
 ## Docker
-First, to build the image (or just skip to download and use version built on Docker Hub):
+First, to build the image (or just skip to download and use version built on [Docker Hub](https://hub.docker.com/r/vanessa/dicom-scraper/)):
 
 ```
 docker build -t vanessa/dicom-scraper .
