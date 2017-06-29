@@ -161,7 +161,7 @@ def main():
      
     # Final result
     print('\n=======================FINALRESULT==========================')
-    print(dicom_name)
+    print(os.path.basename(args.folder))
     print("DETECTED: %s" %result['detected'])
     print("SKIPPED:  %s" %result['skipped'])
     print("CLEAN:    %s" %result['clean'])
