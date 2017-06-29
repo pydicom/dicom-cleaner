@@ -1,6 +1,6 @@
 # Dicom Scraper
 
-This is currently under development, and builds a Singularity image to run text (letter detection) on a demo image. If this is a route we want to go, this can be tweaked to accept a dicom file, and have some logic for finding and removing classified regions.
+This is currently under development, and builds a Docker image to run text (letter detection) on a demo image. You can either detect (just find and report) or clean the data (and save cleaned png images). If this is a route we want to go, the data can be saved as dicom proper.
 
 ## Docker
 First, to build the image (or just skip to download and use version built on [Docker Hub](https://hub.docker.com/r/vanessa/dicom-scraper/)):
@@ -18,7 +18,9 @@ docker run vanessa/dicom-scraper --help
 and you should see usage
 
 ```
-usage: main.py [-h] [--input FOLDER] [--outfolder OUTFOLDER] [--verbose]
+ docker run vanessa/dicom-scraper --help
+usage: main.py [-h] [--input FOLDER] [--outfolder OUTFOLDER] [--detect]
+               [--verbose]
 
 Deid (de-identification) pixel scaping tool.
 
@@ -29,10 +31,32 @@ optional arguments:
   --outfolder OUTFOLDER, -o OUTFOLDER
                         full path to save output, will use /data folder if not
                         specified
+  --detect, -d          Only detect, but don't try to scrub
   --verbose, -v         if set, print more image debugging to screen.
 ```
 
-We see that you should provide a folder with dicom files to the `--input` argument. If you want to see the image files preprocessed (with contenders in red boxes), you should also map a `--volume`. Let's cd to some folder with dicom images, and then map it (the `$PWD` to /data) in the container. We will specify `--input` to be `/data`, meaning the mapped folder with our images.
+We see that you should provide a folder with dicom files to the `--input` argument. If you want to see the image files preprocessed (with contenders in red boxes), you should also map a `--volume`. If you only want to detect (and not clean) you can use `--detect`.
+
+### Detection
+Let's cd to some folder with dicom images, and then map it (the `$PWD` to /data) in the container. We will specify `--input` to be `/data`, meaning the mapped folder with our images. Let's try just detection first
+
+```
+cd dicom_folder
+docker run --volume $PWD:/data vanessa/dicom-scraper --input /data --detect
+``` 
+
+You'll see overly verbose output (this would be nice to replace with a progress bar) followed by the final summary of detection:
+
+```
+1.2.840.113619.2.80.1627437170.19835.1075923296.44
+DETECTED: 84
+SKIPPED:  27
+CLEAN:    1
+TOTAL:    112
+```
+
+### Clean after Detection
+Now we will specify the same command, but without `--detect` so we also perform cleaning (note this is under development).
 
 ```
 cd dicom_folder
@@ -42,7 +66,7 @@ docker run --volume $PWD:/data vanessa/dicom-scraper --input /data
 You'll see the pixels that are being cleaned, and the output (png files for preview) in the same folder (the deprecation warnings need to be disabled):
 
 ```
-vanessa@vanessa-ThinkPad-T460s:~/Documents/Dropbox/Code/som/dicom/deid/phi_in_image_pixels$ docker run --volume $PWD:/data vanessa/dicom-scraper --input /data
+$ docker run --volume $PWD:/data vanessa/dicom-scraper --input /data
 DEBUG Found 5 contender files in data
 DEBUG Checking 5 dicom files for validation.
 /opt/anaconda2/lib/python2.7/site-packages/skimage/transform/_warps.py:84: UserWarning: The default mode, 'constant', will be changed to 'reflect' in skimage 0.15.
@@ -89,12 +113,5 @@ Scrubbing (90,330,97,335)
 ============================================================
 ```
 
-## Singularity
-A build script is provided that (first removes any existing image) and then builds as follows:
-
-```
-singularity create --size 6000 scraper.img
-sudo singularity bootstrap scraper.img Singularity
-```
 
 Complete credit for the base work goes to [@FraPochetti](http://francescopochetti.com/portfoliodata-science-machine-learning/), I just wrapped the functions in a container, added xvfb and other dependencies to (hopefully) reproduce most of the versions that he used, and then added functions to save to file.

@@ -53,6 +53,11 @@ def get_parser():
                         help="full path to save output, will use /data folder if not specified", 
                         type=str, default=None)
 
+    parser.add_argument("--detect","-d", dest='detect', 
+                        help="Only detect, but don't try to scrub", 
+                        default=False, action='store_true')
+
+
     parser.add_argument("--verbose","-v", dest='verbose', 
                         help="if set, print more image debugging to screen.", 
                         default=False, action='store_true')
@@ -85,57 +90,83 @@ def main():
     ##### and classify_text methods are obviously the result of a previously implemented pipeline.
     ##### just for the purpose of clearness below the code is provided. 
     ##### I want to emphasize that the commented code is the one necessary to get the models trained.
+
+    # Keep a record for the user
+    result = {'clean':0,
+              'detected':0,
+              'skipped':0,
+              'total':len(dicom_files)}
     
     # For each file, determine if PHI, for now just alert user
     for dicom_file in dicom_files:
 
         dicom_name = os.path.basename(dicom_file)
-        dicom = UserData(dicom_file,
-                         verbose=args.verbose)
 
-        # plots preprocessed image
-        dicom.save_preprocessed_image('/data/%s_preprocessed.png' %dicom_name)
+        # Try isn't a great approach, but if we log the skipped, we can debug
+        try:
+            dicom = UserData(dicom_file,
+                             verbose=args.verbose)
 
-        # detects objects in preprocessed image
-        candidates = dicom.get_text_candidates()
-        clean = True
+            # plots preprocessed image
+            if not args.detect:
+                dicom.save_preprocessed_image('/data/%s_preprocessed.png' %dicom_name)
 
-        if candidates is not None:
+            # detects objects in preprocessed image
+            candidates = dicom.get_text_candidates()
+            clean = True
 
-            if args.verbose:
-                bot.debug("%s has %s text candidates" %(dicom_name,len(candidates['coordinates'])))
-            # plots objects detected
-            #dicom.plot_to_check_save(candidates, 'Total Objects Detected', '/data/lao-detect-check.png')
+            if candidates is not None:
 
-            # selects objects containing text
-            maybe_text = dicom.select_text_among_candidates('/code/data/linearsvc-hog-fulltrain2-90.pickle')
-
-            # plots objects after text detection
-            #dicom.plot_to_check_save(maybe_text, 'Objects Containing Text Detected', '/data/lao-detect-candidates.png')
-    
-            # classifies single characters
-            classified = dicom.classify_text('/code/data/linearsvc-hog-fulltrain36-90.pickle')
-            if args.verbose:
-                bot.debug("%s has %s classified text" %(dicom_name,len(classified['coordinates'])))
-
-            if len(classified) > 0:
                 if args.verbose:
-                    bot.warning("%s is flagged for text content." %(dicom_name))
-                clean = False
+                    bot.debug("%s has %s text candidates" %(dicom_name,len(candidates['coordinates'])))
+                # plots objects detected
+                #dicom.plot_to_check_save(candidates, 'Total Objects Detected', '/data/lao-detect-check.png')
+
+                # selects objects containing text
+                maybe_text = dicom.select_text_among_candidates('/code/data/linearsvc-hog-fulltrain2-90.pickle')
+
+                # plots objects after text detection
+                #dicom.plot_to_check_save(maybe_text, 'Objects Containing Text Detected', '/data/lao-detect-candidates.png')
+    
+                # classifies single characters
+                classified = dicom.classify_text('/code/data/linearsvc-hog-fulltrain36-90.pickle')
+                if args.verbose:
+                    bot.debug("%s has %s classified text" %(dicom_name,len(classified['coordinates'])))
+
+                if len(classified) > 0:
+                    if args.verbose:
+                        bot.warning("%s is flagged for text content." %(dicom_name))
+                    clean = False
+                else:
+                    bot.info("%s is clean" %(dicom_name))
+
             else:
                 bot.info("%s is clean" %(dicom_name))
-
-        else:
-            bot.info("%s is clean" %(dicom_name))
-
         
-        # plots letters after classification 
-        #dicom.plot_to_check_save(classified, 'Single Character Recognition','/data/lao-detect-letters.png')
+            if clean:
+                result['clean'] +=1
+            else:
+                result['detected'] +=1
+
+            # plots letters after classification 
+            #dicom.plot_to_check_save(classified, 'Single Character Recognition','/data/lao-detect-letters.png')
         
-        if not clean:
-            dicom.scrape_save('/data/%s_cleaned.png' %dicom_name)
+            if not clean and not args.detect:
+                dicom.scrape_save('/data/%s_cleaned.png' %dicom_name)
+
+        except:
+            bot.error("\nProblem loading %s, skipping" %dicom_name)
+            result['skipped']+=1
         print('============================================================')
- 
+     
+    # Final result
+    print('\n=======================FINALRESULT==========================')
+    print(dicom_name)
+    print("DETECTED: %s" %result['detected'])
+    print("SKIPPED:  %s" %result['skipped'])
+    print("CLEAN:    %s" %result['clean'])
+    print("TOTAL:    %s" %result['total'])
+    
 
 if __name__ == '__main__':
     main()
