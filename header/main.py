@@ -103,12 +103,12 @@ def main():
     # Keep a list of flagged and clean
     flagged = []
     clean = []
+    summary = dict()
 
     # We will move images into respective folders
     if args.save is "pdf":
         pdf_report = '%s/deid-clean-%s.pdf' %(args.outfolder, len(dicom_files))
         pp = PdfPages(pdf_report)
-        summary = dict()
 
     # Perform detection one at a time
     for dicom_file in dicom_files:
@@ -125,10 +125,10 @@ def main():
         bot.info(title)
 
         # How does the user want to save data?
-        if args.save is "dicom":
+        if args.save == "dicom":
             outfile = client.save_dicom()
 
-        elif args.save is "png":
+        elif args.save == "png":
             outfile = client.save_png(title=title)
 
         # pdf (default)
@@ -143,7 +143,7 @@ def main():
             if result['flagged']:
                 flagged.append(outfile)
             else:
-                clean.append(output)
+                clean.append(outfile)
 
     # Save summary json file
     summary_json = '%s/deid-clean-%s.json' %(args.outfolder, len(dicom_files))

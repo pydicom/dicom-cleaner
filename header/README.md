@@ -2,6 +2,10 @@
 
 This Docker image uses deid to flag images, and then replace areas of PHI with black pixels. We use xvfb-run from package xvfb to handle not having a display.
 
+[![asciicast](https://asciinema.org/a/152540.png)](https://asciinema.org/a/152540)
+
+The Docker image is served [here](https://hub.docker.com/r/vanessa/dicom-scraper/) under the header tag.
+
 ## Development
 
 ### Build
@@ -16,6 +20,8 @@ If you need to rebuild and be sure that a cache isn't use, don't forget to add `
 ```
 docker build --no-cache -t vanessa/dicom-cleaner .
 ```
+
+If you use the image from docker hub, the full uri is `vanessa/dicom-scraper:header`
 
 ### Interaction
 If you want to interact with the contents of the container, you can do that easily by shelling in and defining the entrypoint to be `/bin/bash`. For easier development (meaning changes on the host change in the container) you can map the present working directory to `/code`.
@@ -79,7 +85,7 @@ The usage suggests the following:
 Let's first try to run the cleaning procedure to produce each of the different file types.  In the command below, by not specifying `--outfolder` we use the default `/data`, and by not specifying `--save` we use the default of pdf. A json file is also produced with more metadata about reasons for flagging, and lists images are associated with. For example, if an image is flagged for a list we called "whitelist" we would want to pass it through no matter what, and an image flagged with "blacklist" might be quarantined no matted what. The concept of "flagged" just means matching a list.
 
 ```
-docker run -v ./test/data:/data vanessa/dicom-cleaner --input /data/input
+docker run -v $PWD/test/data:/data vanessa/dicom-cleaner --input /data/input
 ```
 
 You'll see a long print as the images are being processed, finishing with writing an output pdf and json file
@@ -107,4 +113,18 @@ pdf report written to deid-clean-102.pdf
 
 ```
 
+You can also customize the output format to be png images or dicom, respectively:
 
+```
+docker run -v $PWD/test/data:/data vanessa/dicom-cleaner --input /data/input --save png
+docker run -v $PWD/test/data:/data vanessa/dicom-cleaner --input /data/input --save dicom
+```
+
+If you want to test a different deid recipe, just give the full path (which must be mapped to the container) to it:
+
+```
+docker run -v $PWD/test/data:/data vanessa/dicom-cleaner --input /data/input --deid /data/deid.custom
+```
+
+## Improvements
+We will likely modify the image to have an interactive mode, meaning that a web browser will opening to perform the filter. The web browser approach will be nicer in that we can put more information about the flagged groups and reasons on a single page.
