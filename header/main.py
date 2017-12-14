@@ -34,6 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 '''
 
+import matplotlib
+matplotlib.use('pdf')
+
 from matplotlib.backends.backend_pdf import PdfPages
 from deid.utils import write_json
 from glob import glob
@@ -53,8 +56,8 @@ def get_parser():
                         type=str, default=None)
 
     parser.add_argument("--outfolder","-o", dest='outfolder', 
-                        help="full path to save output, will use /data folder if not specified", 
-                        type=str, default='/data')
+                        help="full path to save output, will use /data/output folder if not specified", 
+                        type=str, default='/data/output')
 
     parser.add_argument('--save',
                         default='pdf',
@@ -93,7 +96,7 @@ def main():
         sys.exit(1)
 
     dicom_files = get_files(args.folder)
-    client = DicomCleaner(output_folder=args.outfolder, deid=deid)
+    client = DicomCleaner(output_folder=args.outfolder, deid=args.deid)
     bot.info('Processing [images]%s [output-folder]%s' %(len(dicom_files), client.output_folder))
     outcomes = {True: 'flagged', False: '  clean'}
 
@@ -103,7 +106,7 @@ def main():
 
     # We will move images into respective folders
     if args.save is "pdf":
-        pdf_report = 'deid-clean-%s.pdf' %len(dicom_files)
+        pdf_report = '%s/deid-clean-%s.pdf' %(args.outfolder, len(dicom_files))
         pp = PdfPages(pdf_report)
         summary = dict()
 
@@ -111,7 +114,10 @@ def main():
     for dicom_file in dicom_files:
 
         dicom_name = os.path.basename(dicom_file)
+
+        # detect --> clean
         result = client.detect(dicom_file)
+        client.clean()
         summary[dicom_name] = result
   
         # Generate title/description for result
@@ -127,9 +133,10 @@ def main():
 
         # pdf (default)
         else:
-           fig = client.get_figure(title=title)
+           plt = client.get_figure(title=title)
+           fig = plt.gcf()
            pp.savefig(fig)
-           fig.close()
+           plt.close(fig)
 
         # Whether dicom or png, append to respective list
         if args.save is not "pdf":
@@ -139,7 +146,7 @@ def main():
                 clean.append(output)
 
     # Save summary json file
-    summary_json = 'deid-clean-%s.json' %len(dicom_files)
+    summary_json = '%s/deid-clean-%s.json' %(args.outfolder, len(dicom_files))
     write_json(summary, summary_json)
     bot.info('json data written to %s' %summary_json)
 
@@ -158,9 +165,16 @@ def main():
 def move_files(files, dest):
     ''' move a list of files to a common destination folder
     '''
+    if not os.path.exists(dest):
+        os.mkdir(dest)
+
     moved_files = []
     for filey in files:
         new_location = "%s/%s" %(dest, os.path.basename(filey))
         shutil.move(filey, new_location)
         moved_files.append(new_location)
     return moved_files
+
+
+if __name__ == '__main__':
+    main()

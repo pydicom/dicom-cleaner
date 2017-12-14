@@ -43,8 +43,9 @@ RUN apt-get clean
 ########################################
 
 RUN mkdir /data  # output content, map here
-RUN mkdir /data/flagged
-RUN mkdir /data/clean
+RUN mkdir /data/input
+RUN mkdir -p /data/output/flagged
+RUN mkdir -p /data/output/clean
 
 RUN mkdir /code  # code
 WORKDIR /code
