@@ -27,7 +27,7 @@ If you use the image from docker hub, the full uri is `vanessa/dicom-scraper:hea
 If you want to interact with the contents of the container, you can do that easily by shelling in and defining the entrypoint to be `/bin/bash`. For easier development (meaning changes on the host change in the container) you can map the present working directory to `/code`.
 
 ```
-docker run -v $PWD:/code --entrypoint /bin/bash -it vanessa/dicom-cleaner
+docker run -v $PWD:/code --entrypoint /bin/bash -it vanessa/dicom-scraper:header
 ```
 
 ### Preparation

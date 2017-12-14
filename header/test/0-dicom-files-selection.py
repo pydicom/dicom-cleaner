@@ -1,12 +1,12 @@
 import pickle
 from random import choice
+from pydicom import read_file
 from glob import glob
 import shutil
 import os
 
 # Each higher level folder has some number of subfolders
 folders = '/fs/DICOM/sendit/8'
-
 
 def make_choice(contenders, func=os.path.isdir):
     selection = None
@@ -47,3 +47,37 @@ for d in range(len(dicom_files)):
 
 # Share with everyone (bash)
 # chmod -R g+rw $HOME/TEST
+
+
+###############################################################################
+# Evaluating testing set for axial
+###############################################################################
+
+import pickle
+import shutil
+from pydicom import read_file
+
+# Save list in case we need it again
+home = os.environ['HOME']
+test_location = '%s/TEST' %home
+data_location = '%s/TEST/data' %home
+
+dicom_files = pickle.load(open('%s/dicom-sample.pkl' %test_location,'rb')) 
+
+axial_images = []
+for dicom_file in dicom_files:
+    dcm = read_file(dicom_file,force=True)
+    if "AXIAL" in dcm.ImageType:
+        axial_images.append(dicom_file)
+
+print('We have %s axial images' %len(axial_images))
+# note that we have 92, probably is good enough
+
+pickle.dump(axial_images, open('%s/dicom-axial.pkl' %test_location,'wb')) 
+
+# Copy to only include the axial images
+# os.system('rm data/*dcm')  # careful!
+for d in range(len(axial_images)):
+    dicom_file = dicom_files[d]
+    new_name = '%s/dicom-axial-%s.dcm' %(data_location, d)
+    shutil.copyfile(dicom_file, new_name)
