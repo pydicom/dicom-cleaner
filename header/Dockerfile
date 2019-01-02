@@ -26,7 +26,7 @@ RUN python3 -m pip install scikit-learn==0.15.2
 
 WORKDIR /opt
 RUN git clone https://www.github.com/pydicom/pydicom
-RUN git clone -b pixel-cleaning https://www.github.com/pydicom/deid
+RUN git clone https://www.github.com/pydicom/deid
 
 # Install Pydicom
 WORKDIR /opt/pydicom
