@@ -1,4 +1,4 @@
-# Dicom Scraper
+# Dicom OCR Scraper
 
 This is currently under development, and builds a Docker image to run text (letter detection) on a demo image. You can either detect (just find and report) or clean the data (and save cleaned png images). If this is a route we want to go, the data can be saved as dicom proper.
 

@@ -1,0 +1,25 @@
+version: 2.1
+orbs:
+  # https://circleci.com/orbs/registry/orb/circleci/docker-publish
+  docker-publish: circleci/docker-publish@1.0.0
+workflows:
+  build_and_publish_docker_images:
+    jobs:
+      - docker-publish/publish:
+          image: pydicom/dicom-ocr-cleaner
+          dockerfile: ocr/Dockerfile
+          path: ocr
+      - docker-publish/publish:
+          image: pydicom/dicom-ocr-cleaner
+          dockerfile: ocr/Dockerfile
+          tag: latest
+          path: ocr
+      - docker-publish/publish:
+          image: pydicom/dicom-header-cleaner
+          dockerfile: header/Dockerfile
+          path: header
+      - docker-publish/publish:
+          image: pydicom/dicom-header-cleaner
+          tag: latest
+          dockerfile: header/Dockerfile
+          path: header
