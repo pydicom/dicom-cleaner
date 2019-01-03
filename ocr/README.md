@@ -1,24 +1,24 @@
-# Dicom Scraper
+# Dicom OCR Scraper
 
 This is currently under development, and builds a Docker image to run text (letter detection) on a demo image. You can either detect (just find and report) or clean the data (and save cleaned png images). If this is a route we want to go, the data can be saved as dicom proper.
 
 ## Docker
-First, to build the image (or just skip to download and use version built on [Docker Hub](https://hub.docker.com/r/vanessa/dicom-scraper/)):
+First, to build the image (or just skip to download and use version built on [Docker Hub](https://hub.docker.com/r/pydicom/dicom-scraper/)):
 
 ```
-docker build -t vanessa/dicom-scraper .
+docker build -t pydicom/dicom-scraper .
 ```
 
 Then to run it, you can first see if it works:
 
 ```
-docker run vanessa/dicom-scraper --help
+docker run pydicom/dicom-scraper --help
 ```
 
 and you should see usage
 
 ```
- docker run vanessa/dicom-scraper --help
+ docker run pydicom/dicom-scraper --help
 usage: main.py [-h] [--input FOLDER] [--outfolder OUTFOLDER] [--detect]
                [--verbose]
 
@@ -42,7 +42,7 @@ Let's cd to some folder with dicom images, and then map it (the `$PWD` to /data)
 
 ```
 cd dicom_folder
-docker run --volume $PWD:/data vanessa/dicom-scraper --input /data --detect
+docker run --volume $PWD:/data pydicom/dicom-scraper --input /data --detect
 ``` 
 
 You'll see overly verbose output (this would be nice to replace with a progress bar) followed by the final summary of detection:
@@ -60,13 +60,13 @@ Now we will specify the same command, but without `--detect` so we also perform 
 
 ```
 cd dicom_folder
-docker run --volume $PWD:/data vanessa/dicom-scraper --input /data
+docker run --volume $PWD:/data pydicom/dicom-scraper --input /data
 ``` 
 
 You'll see the pixels that are being cleaned, and the output (png files for preview) in the same folder (the deprecation warnings need to be disabled):
 
 ```
-$ docker run --volume $PWD:/data vanessa/dicom-scraper --input /data
+$ docker run --volume $PWD:/data pydicom/dicom-scraper --input /data
 DEBUG Found 5 contender files in data
 DEBUG Checking 5 dicom files for validation.
 /opt/anaconda2/lib/python2.7/site-packages/skimage/transform/_warps.py:84: UserWarning: The default mode, 'constant', will be changed to 'reflect' in skimage 0.15.

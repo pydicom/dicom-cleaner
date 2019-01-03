@@ -1,0 +1,61 @@
+version: 2.1
+
+orbs:
+  # https://circleci.com/orbs/registry/orb/circleci/docker-publish
+  docker-publish: circleci/docker-publish@dev:docker-build-without-publish-4737279c9f2a82fb3bb167faef336c87913d7fd1
+workflows:
+
+  # This workflow will be run on all branches but master (to test)
+  build_without_publishing_job:
+    jobs:
+      - docker-publish/publish:
+          image: pydicom/dicom-ocr-cleaner
+          dockerfile: ocr/Dockerfile
+          deploy: false
+          path: ocr
+          filters:
+            branches:
+              ignore: master
+
+      - docker-publish/publish:
+          image: pydicom/dicom-header-cleaner
+          dockerfile: header/Dockerfile
+          deploy: false
+          path: header
+          filters:
+            branches:
+              ignore: master
+
+  # This workflow will deploy images on merge to master only
+  build_and_publish_docker_images:
+    jobs:
+      - docker-publish/publish:
+          image: pydicom/dicom-ocr-cleaner
+          dockerfile: ocr/Dockerfile
+          path: ocr
+          filters:
+            branches:
+              only: master
+      - docker-publish/publish:
+          image: pydicom/dicom-ocr-cleaner
+          dockerfile: ocr/Dockerfile
+          tag: latest
+          path: ocr
+          filters:
+            branches:
+              only: master
+      - docker-publish/publish:
+          image: pydicom/dicom-header-cleaner
+          dockerfile: header/Dockerfile
+          path: header
+          filters:
+            branches:
+              only: master
+      - docker-publish/publish:
+          image: pydicom/dicom-header-cleaner
+          tag: latest
+          dockerfile: header/Dockerfile
+          path: header
+          filters:
+            branches:
+              only: master
