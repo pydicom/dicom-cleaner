@@ -1,23 +1,17 @@
 version: 2.1
 
-exitsuccess: &exitsuccess
-    name: Exit on Successful Build
-    command: exit 0
-
 orbs:
   # https://circleci.com/orbs/registry/orb/circleci/docker-publish
-  docker-publish: circleci/docker-publish@0.1.2
+  docker-publish: circleci/docker-publish@dev:docker-build-without-publish-4737279c9f2a82fb3bb167faef336c87913d7fd1
 workflows:
 
   # This workflow will be run on all branches but master (to test)
-  docker_with_lifecycle:
+  build_without_publishing_job:
     jobs:
       - docker-publish/publish:
           image: pydicom/dicom-ocr-cleaner
           dockerfile: ocr/Dockerfile
           path: ocr
-          after_build:
-            - run: *exitsuccess
           filters:
             branches:
               ignore: master
@@ -26,8 +20,6 @@ workflows:
           image: pydicom/dicom-header-cleaner
           dockerfile: header/Dockerfile
           path: header
-          after_build:
-            - run: *exitsuccess
           filters:
             branches:
               ignore: master
