@@ -11,6 +11,7 @@ workflows:
       - docker-publish/publish:
           image: pydicom/dicom-ocr-cleaner
           dockerfile: ocr/Dockerfile
+          deploy: false
           path: ocr
           filters:
             branches:
@@ -19,6 +20,7 @@ workflows:
       - docker-publish/publish:
           image: pydicom/dicom-header-cleaner
           dockerfile: header/Dockerfile
+          deploy: false
           path: header
           filters:
             branches:
