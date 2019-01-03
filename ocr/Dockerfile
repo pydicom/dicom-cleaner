@@ -4,8 +4,8 @@ ENV LC_ALL C
 ENV PATH /opt/anaconda2/bin:$PATH
 ENV DISPLAY :99.0
 ENV DEBIAN_FRONTEND noninteractive
-ARG PYDICOM_VERSION 1.2.1
-ARG DEID_VERSION 0.1.27
+ARG PYDICOM_VERSION=1.2.1
+ARG DEID_VERSION=0.1.27
 
 RUN apt-get update && \
         apt-get install -y \
