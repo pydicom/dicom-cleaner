@@ -39,7 +39,7 @@ RUN /opt/anaconda2/bin/conda install --yes numpy && \
 # Install Pydicom
 WORKDIR /opt
 RUN wget https://github.com/pydicom/pydicom/archive/v${PYDICOM_VERSION}.tar.gz && \
-    tar xzvf v1.2.1.tar.gz &&
+    tar xzvf v1.2.1.tar.gz && \
     cd pydicom-${PYDICOM_VERSION} && \
     /opt/anaconda2/bin/python setup.py install
 
