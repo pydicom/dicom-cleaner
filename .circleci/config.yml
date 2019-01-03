@@ -12,7 +12,7 @@ workflows:
   # This workflow will be run on all branches but master (to test)
   docker_with_lifecycle:
     jobs:
-      - docker-publish/build:
+      - docker-publish/publish:
           image: pydicom/dicom-ocr-cleaner
           dockerfile: ocr/Dockerfile
           path: ocr
@@ -21,7 +21,7 @@ workflows:
           branches:
             ignore: master
 
-      - docker-publish/build:
+      - docker-publish/publish:
           image: pydicom/dicom-header-cleaner
           dockerfile: header/Dockerfile
           path: header
