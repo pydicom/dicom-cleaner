@@ -18,8 +18,9 @@ workflows:
           path: ocr
           after_build:
             - run: *exitsuccess
-          branches:
-            ignore: master
+          filters:
+            branches:
+              ignore: master
 
       - docker-publish/publish:
           image: pydicom/dicom-header-cleaner
@@ -27,8 +28,9 @@ workflows:
           path: header
           after_build:
             - run: *exitsuccess
-          branches:
-            ignore: master
+          filters:
+            branches:
+              ignore: master
 
   # This workflow will deploy images on merge to master only
   build_and_publish_docker_images:
