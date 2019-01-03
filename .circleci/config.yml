@@ -1,7 +1,7 @@
 version: 2.1
 orbs:
   # https://circleci.com/orbs/registry/orb/circleci/docker-publish
-  docker-publish: circleci/docker-publish@1.0.0
+  docker-publish: circleci/docker-publish@0.1.2
 workflows:
   build_and_publish_docker_images:
     jobs:
