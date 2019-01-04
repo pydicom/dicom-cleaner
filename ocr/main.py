@@ -4,7 +4,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017 Vanessa Sochat
+Copyright (c) 2017-2019 Vanessa Sochat
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -83,19 +83,19 @@ def main():
         sys.exit(1)
 
     dicom_files = get_files(args.folder)
+    number_files = len(list(get_files(args.folder)))
 
-    ##### the following code includes all the steps to get from a raw image to a prediction.
-    ##### the working code is the uncommented one. 
-    ##### the two pickle models which are passed as argument to the select_text_among_candidates
-    ##### and classify_text methods are obviously the result of a previously implemented pipeline.
-    ##### just for the purpose of clearness below the code is provided. 
-    ##### I want to emphasize that the commented code is the one necessary to get the models trained.
+    ##### the following includes all steps to go from raw images to predictions
+    ##### pickle models are passed as argument to select_text_among_candidates
+    ##### and classify_text methods are result of a previously implemented pipeline.
+    ##### just for the purpose of clarity the previous code is provided. 
+    ##### The commented code is the one necessary to get the models trained.
 
     # Keep a record for the user
     result = {'clean':0,
               'detected':0,
               'skipped':0,
-              'total':len(dicom_files)}
+              'total': number_files}
     
     # For each file, determine if PHI, for now just alert user
     for dicom_file in dicom_files:
@@ -109,7 +109,8 @@ def main():
 
             # plots preprocessed image
             if not args.detect:
-                dicom.save_preprocessed_image('/data/%s_preprocessed.png' %dicom_name)
+                dicom_save_name = '/data/%s_preprocessed.png' % dicom_name
+                dicom.save_preprocessed_image(dicom_save_name)
 
             # detects objects in preprocessed image
             candidates = dicom.get_text_candidates()
@@ -118,44 +119,56 @@ def main():
             if candidates is not None:
 
                 if args.verbose:
-                    bot.debug("%s has %s text candidates" %(dicom_name,len(candidates['coordinates'])))
+                    number_candidates = len(candidates['coordinates'])
+                    bot.debug("%s has %s text candidates" % (dicom_name,
+                                                             number_candidates))
                 # plots objects detected
-                #dicom.plot_to_check_save(candidates, 'Total Objects Detected', '/data/lao-detect-check.png')
+                # dicom.plot_to_check_save(candidates, 
+                #                          'Total Objects Detected', 
+                #                          '/data/lao-detect-check.png')
 
                 # selects objects containing text
-                maybe_text = dicom.select_text_among_candidates('/code/data/linearsvc-hog-fulltrain2-90.pickle')
+                saved_model = '/code/data/linearsvc-hog-fulltrain2-90.pickle'
+                maybe_text = dicom.select_text_among_candidates(saved_model)
 
                 # plots objects after text detection
-                #dicom.plot_to_check_save(maybe_text, 'Objects Containing Text Detected', '/data/lao-detect-candidates.png')
-    
+                # dicom.plot_to_check_save(maybe_text, 
+                #                          'Objects Containing Text Detected', 
+                #                          '/data/lao-detect-candidates.png')
+                    
                 # classifies single characters
-                classified = dicom.classify_text('/code/data/linearsvc-hog-fulltrain36-90.pickle')
+                saved_model = '/code/data/linearsvc-hog-fulltrain36-90.pickle'
+                classified = dicom.classify_text(saved_model)
                 if args.verbose:
-                    bot.debug("%s has %s classified text" %(dicom_name,len(classified['coordinates'])))
+                    number_text = len(classified['coordinates'])
+                    bot.debug("%s has %s classified text" %(dicom_name, 
+                                                            number_text))
 
                 if len(classified) > 0:
                     if args.verbose:
-                        bot.warning("%s is flagged for text content." %(dicom_name))
+                        bot.warning("%s flagged for text content." % dicom_name)
                     clean = False
                 else:
-                    bot.info("%s is clean" %(dicom_name))
+                    bot.info("%s is clean" % dicom_name)
 
             else:
-                bot.info("%s is clean" %(dicom_name))
+                bot.info("%s is clean" % dicom_name)
         
             if clean:
-                result['clean'] +=1
+                result['clean'] += 1
             else:
-                result['detected'] +=1
+                result['detected'] += 1
 
             # plots letters after classification 
-            #dicom.plot_to_check_save(classified, 'Single Character Recognition','/data/lao-detect-letters.png')
+            # dicom.plot_to_check_save(classified, 
+            #                          'Single Character Recognition',
+            #                           '/data/lao-detect-letters.png')
         
             if not clean and not args.detect:
-                dicom.scrape_save('/data/%s_cleaned.png' %dicom_name)
+                dicom.scrape_save('/data/%s_cleaned.png' % dicom_name)
 
         except:
-            bot.error("\nProblem loading %s, skipping" %dicom_name)
+            bot.error("\nProblem loading %s, skipping" % dicom_name)
             result['skipped']+=1
         print('============================================================')
      
@@ -172,9 +185,9 @@ if __name__ == '__main__':
     main()
 
     
-##########################################################################################################################    
+################################################################################
 ## MACHINE LEARNING SECTION
-##########################################################################################################################    
+################################################################################
     #from data import OcrData
     #from cifar import Cifar
     #

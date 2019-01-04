@@ -20,20 +20,20 @@ from pydicom import read_file
 
 class UserData():
     '''class in charge of dealing with User Image input.
-    the methods provided are finalized to process the image and return 
-    the text contained in it.
+       the methods provided are finalized to process the image and return 
+       the text contained in it.
     '''
     
     def __init__(self,dicom_file,verbose=False):
         '''reads the dicom image provided by the user as and preprocesses it.
         '''
         dicom = read_file(dicom_file,force=True)
-        self.image = dicom._get_pixel_array()
+        self.image = dicom.pixel_array
         self.verbose = verbose
         #self.image = imread(image_file, as_grey=True)
         self.preprocess_image()
     
-#############################################################################################################
+################################################################################
 
     def preprocess_image(self):
         '''Denoises and increases contrast. 
@@ -44,11 +44,11 @@ class UserData():
         self.cleared = self.bw.copy()
         return self.cleared 
     
-############################################################################################################
+################################################################################
 
     def get_text_candidates(self):
-        '''identifies objects in the image. Gets contours, draws rectangles around them
-        and saves the rectangles as individual images.
+        '''identifies objects in the image. Gets contours, draws rectangles
+           around them and saves the rectangles as individual images.
         '''
         label_image = measure.label(self.cleared)   
         borders = np.logical_xor(self.bw, self.cleared)
@@ -112,11 +112,11 @@ class UserData():
         
         return self.candidates 
     
-##########################################################################################################################
+################################################################################
 
     def select_text_among_candidates(self, model_filename2):
-        '''it takes as argument a pickle model and predicts whether the detected objects
-        contain text or not. 
+        '''it takes as argument a pickle model and predicts whether the
+           objects contain text or not. 
         '''
         with open(model_filename2, 'rb') as fin:
             model = cPickle.load(fin)
@@ -134,13 +134,14 @@ class UserData():
             print('Fullscale: ', self.to_be_classified['fullscale'].shape)
             print('Flattened: ', self.to_be_classified['flattened'].shape)
             print('Contour Coordinates: ', self.to_be_classified['coordinates'].shape)
-            print('Rectangles Identified as NOT containing Text '+str(self.candidates['coordinates'].shape[0]-self.to_be_classified['coordinates'].shape[0])+' out of '+str(self.candidates['coordinates'].shape[0]))
+            print('Rectangles Identified as NOT containing Text '+ 
+                   str(self.candidates['coordinates'].shape[0]-self.to_be_classified['coordinates'].shape[0]) +
+                   ' out of '+str(self.candidates['coordinates'].shape[0]))
             print('============================================================')
         
-               
         return self.to_be_classified
     
-####################################################################################################
+################################################################################
 
     def classify_text(self, model_filename36):
         '''it takes as argument a pickle model and predicts character
@@ -150,20 +151,18 @@ class UserData():
             
         which_text = model.predict(self.to_be_classified['flattened'])
         
-        self.which_text = {
-                                 'fullscale': self.to_be_classified['fullscale'],
-                                 'flattened': self.to_be_classified['flattened'],
-                                 'coordinates': self.to_be_classified['coordinates'],
-                                 'predicted_char': which_text
-                                 }     
+        self.which_text = {'fullscale': self.to_be_classified['fullscale'],
+                           'flattened': self.to_be_classified['flattened'],
+                           'coordinates': self.to_be_classified['coordinates'],
+                           'predicted_char': which_text }     
 
         return self.which_text
 
-############################################################################################################################
+################################################################################
 
     def realign_text(self,show=True):
         '''processes the classified characters and reorders them in a 2D space 
-        generating a matplotlib image. 
+           generating a matplotlib image. 
         '''
         max_maxrow = max(self.which_text['coordinates'][:,2])
         min_mincol = min(self.which_text['coordinates'][:,1])
@@ -197,10 +196,10 @@ class UserData():
         plt.savefig(output_file)
 
 
-############################################################################################################################
+################################################################################
 
     def scrape(self,show=True):
-        '''fill coordinates with black 
+        '''fill coordinates with black. I suppose that's akin to scraping.
         '''
                   
         coordinates = self.which_text["coordinates"]
@@ -234,11 +233,11 @@ class UserData():
 
 
 
-############################################################################################################################
+################################################################################
 
     def plot_to_check(self, what_to_plot, title, show=True):
-        '''plots images at several steps of the whole pipeline, just to check output.
-        what_to_plot is the name of the dictionary to be plotted
+        '''plots images at several steps of the whole pipeline, just to check
+           output what_to_plot is the name of the dictionary to be plotted
         '''
         n_images = what_to_plot['fullscale'].shape[0]
         
@@ -286,7 +285,7 @@ class UserData():
         plt.savefig(output_file)    
         plt.close()
     
-############################################################################################################################
+################################################################################
   
     def plot_preprocessed_image(self,show=True):
         '''plots pre-processed image. The plotted image is the same as obtained at the end
