@@ -12,6 +12,8 @@ FROM ubuntu:16.04
 ENV DISPLAY :99.0
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
+ARG PYDICOM_VERSION=1.2.1
+ARG DEID_VERSION=0.1.29
 
 ########################################
 # Dependencies
@@ -24,20 +26,18 @@ RUN apt-get update && \
                        python3-dev \
                        ipython3 \
                        python3-tk \
+                       libgdcm2-dev \
+                       libgdcm-cil \
+                       libgdcm-tools \
+                       python-gdcm \
                        xvfb
 
-RUN python3 -m pip install numpy matplotlib scikit-image deid
-RUN python3 -m pip install scikit-learn==0.15.2
-
-WORKDIR /opt
-RUN git clone https://www.github.com/pydicom/pydicom
-RUN git clone https://www.github.com/pydicom/deid
-
-# Install Pydicom
-WORKDIR /opt/pydicom
-RUN git checkout affb1cf10c6be2aca311c29ddddc622f8bd1f810 && \
-    python3 setup.py install && \
-    apt-get clean
+RUN python3 -m pip install pip --upgrade && \
+    python3 -m pip install numpy matplotlib && \
+    python3 -m pip install deid==${DEID_VERSION} && \           
+    python3 -m pip install scikit-image && \
+    python3 -m pip install scikit-learn==0.15.2 && \
+    python3 -m pip install pydicom==${PYDICOM_VERSION}
 
 ########################################
 # Content
@@ -50,6 +50,7 @@ RUN mkdir -p /data/output/clean
 RUN mkdir -p /code  # code
 WORKDIR /code
 ADD . /code
-RUN chmod u+x /code/entrypoint.sh
+RUN chmod u+x /code/entrypoint.sh && \
+    apt-get clean
 
 ENTRYPOINT ["/code/entrypoint.sh"]
