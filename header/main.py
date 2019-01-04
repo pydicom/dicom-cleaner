@@ -97,7 +97,8 @@ def main():
     dicom_files = get_files(args.folder)
 
     # Create a Dicom Cleaner client
-    number_files = len(list(dicom_files))
+    number_files = len(list(get_files(args.folder)))
+
     client = DicomCleaner(output_folder=args.outfolder, deid=args.deid)
     bot.info('Processing [images]%s [output-folder]%s' %(number_files, 
                                                          client.output_folder))
