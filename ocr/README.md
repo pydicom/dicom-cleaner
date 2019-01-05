@@ -1,13 +1,21 @@
 # Dicom OCR Scraper
 
-This is currently under development, and builds a Docker image to run text 
-(letter detection) on a demo image. You can either detect (just find and report) 
-or clean the data (and save cleaned png images). If this is a route we want to go, 
-the data can be saved as dicom proper.
+**important** this model would need to be rebuilt to work with more recent
+python and packages. The older version is provided
+at [vanessa/dicom-scraper](https://hub.docker.com/r/vanessa/dicom-scraper).
+We will need to rebuild the model using python 3 and a later version of scikit-learn
+to update the base container.
+_______________________
+
+
+This is currently under development, and builds a Docker image to run text (letter detection) 
+on a demo image. You can either detect (just find and report) or clean the data 
+(and save cleaned png images). If this is a route we want to go, the 
+data can be saved as dicom proper.
 
 ## Docker
 First, to build the image (or just skip to download and use version built on 
-[Docker Hub](https://hub.docker.com/r/pydicom/dicom-ocr-cleaner/)):
+[Docker Hub](https://hub.docker.com/r/vanessa/dicom-scraper)):
 
 ```python
 $ docker build -t pydicom/dicom-ocr-cleaner .

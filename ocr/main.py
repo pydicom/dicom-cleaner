@@ -39,7 +39,6 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
 
 
-
 def get_parser():
     parser = argparse.ArgumentParser(
     description="Deid (de-identification) pixel scaping tool.")
@@ -191,12 +190,18 @@ if __name__ == '__main__':
     #from data import OcrData
     #from cifar import Cifar
     #
+    # data downloaded from https://www.kaggle.com/c/cifar-10/data
+    # cd ocr/ # download files to here
+    # 7z x train.7z  
+    # 7z x test.7z  
+
     ####################################################################
     ## 1- GENERATE MODEL TO PREDICT WHETHER AN OBJECT CONTAINS TEXT OR NOT
     ####################################################################
     #
     # CREATES AN INSTANCE OF THE CLASS LOADING THE OCR DATA 
     #data = OcrData('/home/francesco/Dropbox/DSR/OCR/ocr-config.py')
+    #data = OcrData('/code/ocr/text-config.py')
     #
     # GENERATES A UNIQUE DATA SET MERGING NON-TEXT WITH TEXT IMAGES
     #data.merge_with_cifar()
