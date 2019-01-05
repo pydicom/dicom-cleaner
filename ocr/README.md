@@ -18,19 +18,19 @@ First, to build the image (or just skip to download and use version built on
 [Docker Hub](https://hub.docker.com/r/vanessa/dicom-scraper)):
 
 ```python
-$ docker build -t pydicom/dicom-ocr-cleaner .
+$ docker build -t vanessa/dicom-scraper .
 ```
 
 Then to run it, you can first see if it works:
 
 ```bash
-$ docker run pydicom/dicom-ocr-cleaner --help
+$ docker run vanessa/dicom-scraper --help
 ```
 
 and you should see usage
 
 ```python
-$ docker run pydicom/dicom-ocr-cleaner --help
+$ docker run vanessa/dicom-scraper --help
 usage: main.py [-h] [--input FOLDER] [--outfolder OUTFOLDER] [--detect]
                [--verbose]
 
@@ -59,7 +59,7 @@ folder with our images. Let's try just detection first
 
 ```python
 $ cd dicom_folder
-$ docker run --volume $PWD:/data pydicom/dicom-ocr-cleaner --input /data --detect
+$ docker run --volume $PWD:/data vanessa/dicom-scraper --input /data --detect
 ``` 
 
 You'll see overly verbose output (this would be nice to replace with a progress bar) 
@@ -77,13 +77,13 @@ Now we will specify the same command, but without `--detect` so we also perform 
 
 ```
 cd dicom_folder
-$ docker run --volume $PWD:/data pydicom/dicom-ocr-cleaner --input /data
+$ docker run --volume $PWD:/data vanessa/dicom-scraper --input /data
 ``` 
 
 You'll see the pixels that are being cleaned, and the output (png files for preview) in the same folder (the deprecation warnings need to be disabled):
 
 ```bash
-$ docker run --volume $PWD:/data pydicom/dicom-ocr-cleaner --input /data
+$ docker run --volume $PWD:/data vanessa/dicom-scraper --input /data
 DEBUG Found 5 contender files in data
 DEBUG Checking 5 dicom files for validation.
 /opt/anaconda2/lib/python2.7/site-packages/skimage/transform/_warps.py:84: UserWarning: The default mode, 'constant', will be changed to 'reflect' in skimage 0.15.
