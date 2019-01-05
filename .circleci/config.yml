@@ -9,15 +9,6 @@ workflows:
   build_without_publishing_job:
     jobs:
       - docker-publish/publish:
-          image: pydicom/dicom-ocr-cleaner
-          dockerfile: ocr/Dockerfile
-          deploy: false
-          path: ocr
-          filters:
-            branches:
-              ignore: master
-
-      - docker-publish/publish:
           image: pydicom/dicom-header-cleaner
           dockerfile: header/Dockerfile
           deploy: false
@@ -29,21 +20,6 @@ workflows:
   # This workflow will deploy images on merge to master only
   build_and_publish_docker_images:
     jobs:
-      - docker-publish/publish:
-          image: pydicom/dicom-ocr-cleaner
-          dockerfile: ocr/Dockerfile
-          path: ocr
-          filters:
-            branches:
-              only: master
-      - docker-publish/publish:
-          image: pydicom/dicom-ocr-cleaner
-          dockerfile: ocr/Dockerfile
-          tag: latest
-          path: ocr
-          filters:
-            branches:
-              only: master
       - docker-publish/publish:
           image: pydicom/dicom-header-cleaner
           dockerfile: header/Dockerfile

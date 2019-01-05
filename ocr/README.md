@@ -1,24 +1,36 @@
 # Dicom OCR Scraper
 
-This is currently under development, and builds a Docker image to run text (letter detection) on a demo image. You can either detect (just find and report) or clean the data (and save cleaned png images). If this is a route we want to go, the data can be saved as dicom proper.
+**important** this model would need to be rebuilt to work with more recent
+python and packages. The older version is provided
+at [vanessa/dicom-scraper](https://hub.docker.com/r/vanessa/dicom-scraper).
+We will need to rebuild the model using python 3 and a later version of scikit-learn
+to update the base container.
+_______________________
+
+
+This is currently under development, and builds a Docker image to run text (letter detection) 
+on a demo image. You can either detect (just find and report) or clean the data 
+(and save cleaned png images). If this is a route we want to go, the 
+data can be saved as dicom proper.
 
 ## Docker
-First, to build the image (or just skip to download and use version built on [Docker Hub](https://hub.docker.com/r/pydicom/dicom-scraper/)):
+First, to build the image (or just skip to download and use version built on 
+[Docker Hub](https://hub.docker.com/r/vanessa/dicom-scraper)):
 
-```
-docker build -t pydicom/dicom-scraper .
+```python
+$ docker build -t vanessa/dicom-scraper .
 ```
 
 Then to run it, you can first see if it works:
 
-```
-docker run pydicom/dicom-scraper --help
+```bash
+$ docker run vanessa/dicom-scraper --help
 ```
 
 and you should see usage
 
-```
- docker run pydicom/dicom-scraper --help
+```python
+$ docker run vanessa/dicom-scraper --help
 usage: main.py [-h] [--input FOLDER] [--outfolder OUTFOLDER] [--detect]
                [--verbose]
 
@@ -35,20 +47,25 @@ optional arguments:
   --verbose, -v         if set, print more image debugging to screen.
 ```
 
-We see that you should provide a folder with dicom files to the `--input` argument. If you want to see the image files preprocessed (with contenders in red boxes), you should also map a `--volume`. If you only want to detect (and not clean) you can use `--detect`.
+We see that you should provide a folder with dicom files to the `--input` argument. 
+If you want to see the image files preprocessed (with contenders in red boxes), 
+you should also map a `--volume`. If you only want to detect (and not clean) 
+you can use `--detect`.
 
 ### Detection
-Let's cd to some folder with dicom images, and then map it (the `$PWD` to /data) in the container. We will specify `--input` to be `/data`, meaning the mapped folder with our images. Let's try just detection first
+Let's cd to some folder with dicom images, and then map it (the `$PWD` to /data) 
+in the container. We will specify `--input` to be `/data`, meaning the mapped 
+folder with our images. Let's try just detection first
 
-```
-cd dicom_folder
-docker run --volume $PWD:/data pydicom/dicom-scraper --input /data --detect
+```python
+$ cd dicom_folder
+$ docker run --volume $PWD:/data vanessa/dicom-scraper --input /data --detect
 ``` 
 
-You'll see overly verbose output (this would be nice to replace with a progress bar) followed by the final summary of detection:
+You'll see overly verbose output (this would be nice to replace with a progress bar) 
+followed by the final summary of detection:
 
-```
-1.2.840.113619.2.80.1627437170.19835.1075923296.44
+```bash
 DETECTED: 84
 SKIPPED:  27
 CLEAN:    1
@@ -60,13 +77,13 @@ Now we will specify the same command, but without `--detect` so we also perform 
 
 ```
 cd dicom_folder
-docker run --volume $PWD:/data pydicom/dicom-scraper --input /data
+$ docker run --volume $PWD:/data vanessa/dicom-scraper --input /data
 ``` 
 
 You'll see the pixels that are being cleaned, and the output (png files for preview) in the same folder (the deprecation warnings need to be disabled):
 
-```
-$ docker run --volume $PWD:/data pydicom/dicom-scraper --input /data
+```bash
+$ docker run --volume $PWD:/data vanessa/dicom-scraper --input /data
 DEBUG Found 5 contender files in data
 DEBUG Checking 5 dicom files for validation.
 /opt/anaconda2/lib/python2.7/site-packages/skimage/transform/_warps.py:84: UserWarning: The default mode, 'constant', will be changed to 'reflect' in skimage 0.15.

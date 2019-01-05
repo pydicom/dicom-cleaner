@@ -2,9 +2,7 @@
 
 '''
 
-BSD 3-Clause License
-
-Copyright (c) 2017, Vanessa Sochat
+Copyright (c) 2017-2019, Vanessa Sochat
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -48,6 +46,7 @@ import os
 
 
 def get_parser():
+
     parser = argparse.ArgumentParser(
     description="Deid (de-identification) based on header tool.")
 
@@ -87,17 +86,22 @@ def main():
     except:
         sys.exit(0)
 
-    from deid.dicom import get_files
+    from deid.dicom import ( get_files, DicomCleaner )
     from logger import bot
-    from deid.dicom import DicomCleaner
 
     if args.folder is None:
         bot.error("Please provide a folder with dicom files with --input.")
         sys.exit(1)
 
+    # This is an iterator, so must convert to list to get length
     dicom_files = get_files(args.folder)
+
+    # Create a Dicom Cleaner client
+    number_files = len(list(get_files(args.folder)))
+
     client = DicomCleaner(output_folder=args.outfolder, deid=args.deid)
-    bot.info('Processing [images]%s [output-folder]%s' %(len(dicom_files), client.output_folder))
+    bot.info('Processing [images]%s [output-folder]%s' %(number_files, 
+                                                         client.output_folder))
     outcomes = {True: 'flagged', False: '  clean'}
 
     # Keep a list of flagged and clean
@@ -107,7 +111,7 @@ def main():
 
     # We will move images into respective folders
     if args.save is "pdf":
-        pdf_report = '%s/deid-clean-%s.pdf' %(args.outfolder, len(dicom_files))
+        pdf_report = '%s/deid-clean-%s.pdf' %(args.outfolder, number_files)
         pp = PdfPages(pdf_report)
 
     # Perform detection one at a time
@@ -146,7 +150,7 @@ def main():
                 clean.append(outfile)
 
     # Save summary json file
-    summary_json = '%s/deid-clean-%s.json' %(args.outfolder, len(dicom_files))
+    summary_json = '%s/deid-clean-%s.json' %(args.outfolder, number_files)
     write_json(summary, summary_json)
     bot.info('json data written to %s' %summary_json)
 
@@ -157,8 +161,8 @@ def main():
 
     # Otherwise, move files into respective folders
     else:
-        move_files(files=flagged, dest='%s/flagged' %args.outfolder)
-        move_files(files=cleaned, dest='%s/clean' %args.outfolder)
+        move_files(files=flagged, dest='%s/flagged' % args.outfolder)
+        move_files(files=cleaned, dest='%s/clean' % args.outfolder)
 
 
 

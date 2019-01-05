@@ -33,7 +33,7 @@ class UserData():
         #self.image = imread(image_file, as_grey=True)
         self.preprocess_image()
     
-#############################################################################################################
+################################################################################
 
     def preprocess_image(self):
         '''Denoises and increases contrast. 
@@ -44,7 +44,7 @@ class UserData():
         self.cleared = self.bw.copy()
         return self.cleared 
     
-############################################################################################################
+################################################################################
 
     def get_text_candidates(self):
         '''identifies objects in the image. Gets contours, draws rectangles around them
@@ -112,7 +112,7 @@ class UserData():
         
         return self.candidates 
     
-##########################################################################################################################
+################################################################################
 
     def select_text_among_candidates(self, model_filename2):
         '''it takes as argument a pickle model and predicts whether the detected objects
@@ -140,7 +140,7 @@ class UserData():
                
         return self.to_be_classified
     
-####################################################################################################
+################################################################################
 
     def classify_text(self, model_filename36):
         '''it takes as argument a pickle model and predicts character
@@ -159,7 +159,7 @@ class UserData():
 
         return self.which_text
 
-############################################################################################################################
+################################################################################
 
     def realign_text(self,show=True):
         '''processes the classified characters and reorders them in a 2D space 
@@ -197,7 +197,7 @@ class UserData():
         plt.savefig(output_file)
 
 
-############################################################################################################################
+################################################################################
 
     def scrape(self,show=True):
         '''fill coordinates with black 
@@ -234,7 +234,7 @@ class UserData():
 
 
 
-############################################################################################################################
+################################################################################
 
     def plot_to_check(self, what_to_plot, title, show=True):
         '''plots images at several steps of the whole pipeline, just to check output.
@@ -286,8 +286,8 @@ class UserData():
         plt.savefig(output_file)    
         plt.close()
     
-############################################################################################################################
-  
+################################################################################
+ 
     def plot_preprocessed_image(self,show=True):
         '''plots pre-processed image. The plotted image is the same as obtained at the end
         of the get_text_candidates method.
